@@ -1,7 +1,7 @@
-{ 1,Iron,7.0 }
-,{ 2,Pens,7.0 }
-,{ 4,Bugs,70.0 }
-,{ 5,Device,17.0 }
-,{ 2,plastics,3.0 }
-,{ 1,e,2.0 }
-,
+1,mk,5.0
+2,plastics,3.0
+3,Green,4.0
+4,dcdmckd,6.0
+5,iron,2.8
+
+6,dfg,8.0
