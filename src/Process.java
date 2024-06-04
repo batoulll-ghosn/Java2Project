@@ -8,16 +8,18 @@ import java.util.ArrayList;
 
 public class Process {
     private int identifier;
+    private String Name;
     private List<Resource> resources;
     private double cost;
     private String state;
-    private int duration;  // Assuming duration is in some unit of time
+    private int duration;
 
-    public Process(int identifier, List<Resource> resources, String state, int duration) {
+    public Process(int identifier, String Name, List<Resource> resources, String state, int duration) {
         this.identifier = identifier;
         this.resources = resources;
         this.cost = calculateCost(resources);
         this.state = state;
+        this.Name = Name;
         this.duration = duration;
     }
 
@@ -45,16 +47,42 @@ public class Process {
         return duration;
     }
 
+    public String getName() {
+        return Name;
+    }
+
     @Override
     public String toString() {
         StringBuilder resourcesStr = new StringBuilder();
         for (Resource resource : resources) {
             resourcesStr.append(resource.getName()).append(":").append(resource.getCostPerUnit()).append(";");
         }
-        return identifier + "," + resourcesStr.toString() + "," + cost + "," + state + "," + duration;
+        return identifier + "," + Name + "," + resourcesStr.toString() + "," + cost + "," + state + "," + duration;
+    }
+
+    public static int getNextIdentifier() {
+        int maxId = 0;
+        try (BufferedReader reader = new BufferedReader(new FileReader("process.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    String[] parts = line.split(",");
+                    int id = Integer.parseInt(parts[0]);
+                    if (id > maxId) {
+                        maxId = id;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return maxId + 1;
     }
 
     public static void addProcess(List<Process> processes, Process process) {
+        int nextId = getNextIdentifier();
+        process.identifier = nextId;
         processes.add(process);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("process.txt", true))) {
             String newEntry = process.toString();
@@ -77,16 +105,17 @@ public class Process {
                 if (!line.isEmpty()) {
                     String[] parts = line.split(",");
                     int id = Integer.parseInt(parts[0]);
-                    String[] resourceParts = parts[1].split(";");
+                    String name = parts[1];
+                    String[] resourceParts = parts[2].split(";");
                     List<Resource> resources = new ArrayList<>();
                     for (String res : resourceParts) {
                         String[] resParts = res.split(":");
                         resources.add(new Resource(resParts[0], Double.parseDouble(resParts[1])));
                     }
-                    double cost = Double.parseDouble(parts[2]);
-                    String state = parts[3];
-                    int duration = Integer.parseInt(parts[4]);
-                    entries.add(new Process(id, resources, state, duration));
+                    double cost = Double.parseDouble(parts[3]);
+                    String state = parts[4];
+                    int duration = Integer.parseInt(parts[5]);
+                    entries.add(new Process(id, name, resources, state, duration));
                 }
             }
         } catch (IOException e) {
@@ -102,12 +131,7 @@ public class Process {
         resources.add(new Resource("Resource3", 50.0));
         resources.add(new Resource("Resource4", 75.0));
 
-        Process newProcess = new Process(1, resources, "Active", 5);
+        Process newProcess = new Process(0, "Project1", resources, "Active", 5); // Placeholder ID
         Process.addProcess(processes, newProcess);
-
-        List<Process> allProcesses = Process.getProcess();
-        for (Process process : allProcesses) {
-            System.out.println(process);
-        }
     }
 }

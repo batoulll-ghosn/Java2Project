@@ -5,7 +5,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -22,6 +21,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 
 public class MyFinalProject {
     private JFrame frame;
@@ -71,7 +74,46 @@ public class MyFinalProject {
         menuBar.add(menuResource);
 
         frame.setJMenuBar(menuBar);
+        addResource.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFrame addFrame = new JFrame("Add Matricielle Resource");
+                addFrame.setSize(400, 300);
+                JPanel panel = new JPanel();
+                panel.setLayout(null);
 
+                JLabel lblName = new JLabel("Name:");
+                lblName.setBounds(10, 40, 80, 25);
+                panel.add(lblName);
+
+                JTextField txtName = new JTextField();
+                txtName.setBounds(100, 40, 160, 25);
+                panel.add(txtName);
+
+                JLabel lblCostPerUnit = new JLabel("Cost per Unit:");
+                lblCostPerUnit.setBounds(10, 70, 80, 25);
+                panel.add(lblCostPerUnit);
+
+                JTextField txtCostPerUnit = new JTextField();
+                txtCostPerUnit.setBounds(100, 70, 160, 25);
+                panel.add(txtCostPerUnit);
+
+                JButton btnAdd = new JButton("Add");
+                btnAdd.setBounds(100, 100, 80, 25);
+                panel.add(btnAdd);
+
+                btnAdd.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        String name = txtName.getText();
+                        double costPerUnit = Double.parseDouble(txtCostPerUnit.getText());
+                        matricielle.addMatriciele(name, costPerUnit);
+                        addFrame.dispose();
+                    }
+                });
+
+                addFrame.getContentPane().add(panel);
+                addFrame.setVisible(true);
+            }
+        });
         addProcess.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFrame addFrame = new JFrame("Add Process");
@@ -111,14 +153,14 @@ public class MyFinalProject {
                     resourceCheckBoxes.add(checkBox);
                     y += 30;
                 }
-
+                JLabel lblTotalCost = new JLabel("Total Cost:");
+                lblTotalCost.setBounds(10, 70, 100, 25);
+                panel.add(lblTotalCost);
                 JButton btnAdd = new JButton("Add");
                 btnAdd.setBounds(120, y, 80, 25);
                 panel.add(btnAdd);
 
-                JLabel lblTotalCost = new JLabel("Total Cost: 0.0");
-                lblTotalCost.setBounds(120, y + 30, 200, 25);
-                panel.add(lblTotalCost);
+          
 
                 btnAdd.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
@@ -126,8 +168,9 @@ public class MyFinalProject {
                         int duration = Integer.parseInt(txtDuration.getText());
                         List<Resource> selectedResources = new ArrayList<>();
                         double totalCost = 0.0;
-
+                      
                         for (int i = 0; i < resourceCheckBoxes.size(); i++) {
+                          
                             if (resourceCheckBoxes.get(i).isSelected()) {
                                 String[] data = resourceEntries.get(i).split(",");
                                 String resourceName = data[1];
@@ -135,12 +178,13 @@ public class MyFinalProject {
                                 selectedResources.add(new Resource(resourceName, costPerUnit));
                                 totalCost += matricielle.calculCostMat(1, resourceName, costPerUnit);
                             }
+                         
                         }
-
-                        Process newProcess = new Process(1, selectedResources, "Active", duration);
+                        lblTotalCost.setText("Total Cost: " + totalCost);
+                        Process newProcess = new Process(1, name, selectedResources, "Active", duration);
                         Process.addProcess(new ArrayList<>(), newProcess);
 
-                        lblTotalCost.setText("Total Cost: " + totalCost);
+                        
                         addFrame.dispose();
                     }
                 });
@@ -150,6 +194,8 @@ public class MyFinalProject {
             }
         });
 
+   
+
         getProcess.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFrame viewFrame = new JFrame("View Processes");
@@ -157,7 +203,7 @@ public class MyFinalProject {
 
                 List<Process> processes = Process.getProcess();
 
-                String[] columnNames = {"Identifier", "Resources", "Cost", "State", "Duration"};
+                String[] columnNames ={"Process Name","Resources", "Cost", "State", "Duration"};
                 DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
 
                 for (Process process : processes) {
@@ -165,7 +211,7 @@ public class MyFinalProject {
                     for (Resource resource : process.getResources()) {
                         resourcesStr.append(resource.getName()).append(": ").append(resource.getCostPerUnit()).append("; ");
                     }
-                    Object[] rowData = {process.getIdentifier(), resourcesStr.toString(), process.getCost(), process.getState(), process.getDuration()};
+                    Object[] rowData = {process.getName(),resourcesStr.toString(), process.getCost(), process.getState(), process.getDuration()};
                     tableModel.addRow(rowData);
                 }
 
@@ -176,56 +222,163 @@ public class MyFinalProject {
                 viewFrame.setVisible(true);
             }
         });
+    
+
+        addResource.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFrame addFrame = new JFrame("Add Matricielle Resource");
+                addFrame.setSize(400, 300);
+                JPanel panel = new JPanel();
+                panel.setLayout(null);
+
+                JLabel lblName = new JLabel("Name:");
+                lblName.setBounds(10, 40, 80, 25);
+                panel.add(lblName);
+
+                JTextField txtName = new JTextField();
+                txtName.setBounds(100, 40, 160, 25);
+                panel.add(txtName);
+
+                JLabel lblCostPerUnit = new JLabel("Cost per Unit:");
+                lblCostPerUnit.setBounds(10, 70, 80, 25);
+                panel.add(lblCostPerUnit);
+
+                JTextField txtCostPerUnit = new JTextField();
+                txtCostPerUnit.setBounds(100, 70, 160, 25);
+                panel.add(txtCostPerUnit);
+
+                JButton btnAdd = new JButton("Add");
+                btnAdd.setBounds(100, 100, 80, 25);
+                panel.add(btnAdd);
+
+                btnAdd.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        String name = txtName.getText();
+                        double costPerUnit = Double.parseDouble(txtCostPerUnit.getText());
+                        matricielle.addMatriciele(name, costPerUnit);
+                        addFrame.dispose();
+                    }
+                });
+
+                addFrame.getContentPane().add(panel);
+                addFrame.setVisible(true);
+            }
+        });
+
+        getResource.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFrame viewFrame = new JFrame("View Matricielle Resources");
+                viewFrame.setSize(800, 600);
+
+                String[] columnNames = {"Identifier", "Name", "Cost per Unit", "Update"};
+                DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return column != 0; // Make the identifier column non-editable
+                    }
+                };
+                JTable table = new JTable(tableModel);
+
+                List<String> entries = matricielle.getMatriciele();
+                for (String entry : entries) {
+                    String[] data = entry.split(",");
+                    tableModel.addRow(new Object[]{data[0], data[1], data[2], "Update"});
+                }
+
+                TableColumnModel columnModel = table.getColumnModel();
+                columnModel.getColumn(3).setCellRenderer(new ButtonRenderer());
+                columnModel.getColumn(3).setCellEditor(new ButtonEditor(new JTextField(), matricielle, tableModel));
+
+                JScrollPane scrollPane = new JScrollPane(table);
+                viewFrame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+                viewFrame.setVisible(true);
+            }
+        });
+
+        frame.setJMenuBar(menuBar);
+        frame.setVisible(true);
     }
 
-    public class ButtonColumn extends AbstractCellEditor implements TableCellRenderer, TableCellEditor, ActionListener {
-        private JTable table;
-        private JButton renderButton;
-        private JButton editButton;
-        private String text;
+    public void updateMatriciele(int identifier, String newName, double newCostPerUnit) {
+        List<String> entries = matricielle.getMatriciele();
+        List<String> updatedEntries = new ArrayList<>();
+        String idStr = String.valueOf(identifier);
+        boolean updated = false;
 
-        public ButtonColumn(JTable table, int column) {
-            super();
-            this.table = table;
-            renderButton = new JButton();
-            editButton = new JButton();
-            editButton.setFocusPainted(false);
-            editButton.addActionListener(this);
-
-            TableColumnModel columnModel = table.getColumnModel();
-            columnModel.getColumn(column).setCellRenderer(this);
-            columnModel.getColumn(column).setCellEditor(this);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            if (isSelected) {
-                renderButton.setForeground(table.getSelectionForeground());
-                renderButton.setBackground(table.getSelectionBackground());
-            } else {
-                renderButton.setForeground(table.getForeground());
-                
+        for (String entry : entries) {
+            String[] data = entry.split(",");
+            if (data[0].equals(idStr)) {
+                data[1] = newName;
+                data[2] = String.valueOf(newCostPerUnit);
+                entry = String.join(",", data);
+                updated = true;
+                System.out.println("Updated entry: " + entry);
             }
-            renderButton.setText((value == null) ? "" : value.toString());
-            return renderButton;
+            updatedEntries.add(entry);
         }
 
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            text = (value == null) ? "" : value.toString();
-            editButton.setText(text);
-            return editButton;
+        if (!updated) {
+            System.out.println("Identifier not found.");
+            return;
         }
 
-        @Override
-        public Object getCellEditorValue() {
-            return text;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            fireEditingStopped();
-            System.out.println(e.getActionCommand() + " : " + table.getSelectedRow());
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("Resources.txt"))) {
+            for (String updatedEntry : updatedEntries) {
+                writer.write(updatedEntry);
+                writer.newLine();
+            }
+            System.out.println("Update Successful!");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
+
+class ButtonRenderer extends JButton implements TableCellRenderer {
+    public ButtonRenderer() {
+        setText("Update");
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value,
+                                                   boolean isSelected, boolean hasFocus, int row, int column) {
+        return this;
+    }
+}
+
+class ButtonEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
+    private JButton button;
+    private Resource.Matricielle matricielle;
+    private DefaultTableModel tableModel;
+    private int row;
+
+    public ButtonEditor(JTextField textField, Resource.Matricielle matricielle, DefaultTableModel tableModel) {
+        super();
+        this.matricielle = matricielle;
+        this.tableModel = tableModel;
+        button = new JButton("Update");
+        button.addActionListener(this);
+    }
+
+    @Override
+    public Component getTableCellEditorComponent(JTable table, Object value,
+                                                 boolean isSelected, int row, int column) {
+        this.row = row;
+        return button;
+    }
+
+    @Override
+    public Object getCellEditorValue() {
+        return "Update";
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        int identifier = Integer.parseInt((String) tableModel.getValueAt(row, 0));
+        String newName = (String) tableModel.getValueAt(row, 1);
+        double newCostPerUnit = Double.parseDouble((String) tableModel.getValueAt(row, 2));
+        matricielle.updateMatriciele(identifier, newName, newCostPerUnit);
+        fireEditingStopped();
+    }
+}
+

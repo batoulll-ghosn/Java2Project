@@ -1,3 +1,4 @@
-1,mk:5.0;plastics:3.0;,8.0,Active,60
-1,mk:5.0;plastics:3.0;Green:4.0;,12.0,Active,20
-1,Resource3:50.0;Resource4:75.0;,125.0,Active,5
+1,we,se:3.0;,3.0,Active,2
+2,wee,se:3.0;,3.0,Active,4
+3,h,se:3.0;,3.0,Active,4
+4,xccx,se:6.0;sssss:8.0;,14.0,Active,3
