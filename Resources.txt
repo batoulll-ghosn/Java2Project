@@ -3,5 +3,7 @@
 3,Green,4.0
 4,dcdmckd,6.0
 5,iron,2.8
-
 6,dfg,8.0
+7,ddd3,3.0
+
+8,po3,5.0

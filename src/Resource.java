@@ -3,17 +3,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Resource {
-    private int identifier; 
+    private int identifier;
+    private String name;
+    private double costPerUnit;
 
-    public double TotalResourceCost(double matCost, double humanCost, double logisticCost) {
+    public Resource(String name, double costPerUnit) {
+        this.name = name;
+        this.costPerUnit = costPerUnit;
+    }
+
+    public int getIdentifier() {
+        return identifier;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getCostPerUnit() {
+        return costPerUnit;
+    }
+
+    public double totalResourceCost(double matCost, double humanCost, double logisticCost) {
         return matCost + humanCost + logisticCost;
     }
 
-    public class Logistics extends Resource {
-        String name;
-        double logisticCost;
+    public static class Logistics extends Resource {
+        public Logistics(String name, double logisticCost) {
+            super(name, logisticCost);
+        }
 
-        public double LogisticsCost(String log) {
+        public double logisticsCost(String log) {
             if (log.equalsIgnoreCase("Fuel") || log.equalsIgnoreCase("Electricity")) {
                 if (log.contains("Fuel") && log.contains("Electricity")) {
                     return 50.00; // Special cost for both "Fuel" and "Electricity"
@@ -31,43 +51,41 @@ public class Resource {
         }
     }
 
-    public class HumanResources extends Resource {
+    public static class HumanResources extends Resource {
         String specialty;
         String function;
         double costPerHour;
-        String name;
 
-        public double CalculCostHum(double numberOfWorkingHours, String[] func) {
-            double costPerHour = 0.00;
+        public HumanResources(String name, double costPerHour) {
+            super(name, costPerHour);
+        }
+
+        public double calculCostHum(double numberOfWorkingHours, String[] func) {
+            double totalCost = 0.00;
             for (String f : func) {
                 if (f.equalsIgnoreCase("engineer")) {
-                    costPerHour += 20.00 * numberOfWorkingHours;
-                } else if (f.equalsIgnoreCase("Technicien")) {
-                    costPerHour += 15.00 * numberOfWorkingHours;
+                    totalCost += 20.00 * numberOfWorkingHours;
+                } else if (f.equalsIgnoreCase("Technician")) {
+                    totalCost += 15.00 * numberOfWorkingHours;
                 } else if (f.equalsIgnoreCase("Manager")) {
-                    costPerHour += 28.00 * numberOfWorkingHours;
+                    totalCost += 28.00 * numberOfWorkingHours;
                 }
-            }
-            return costPerHour;
-        }
-    }
-
-    public class Matricielle extends Resource {
-        String name;
-        double costPerUnit;
-
-        public double CalculCostMat(double quantity, String name) {
-            double totalCost = 0.00;
-            if (name.equalsIgnoreCase("plastic")) {
-                totalCost += 1.00 * quantity;
-            } else if (name.equalsIgnoreCase("iron")) {
-                totalCost += 2.00 * quantity;
-            } else if (name.equalsIgnoreCase("Glass")) {
-                totalCost += 4.00 * quantity;
             }
             return totalCost;
         }
-      
+    }
+
+    public static class Matricielle extends Resource {
+        public Matricielle(String name, double costPerUnit) {
+            super(name, costPerUnit);
+        }
+
+        public double calculCostMat(double quantity, String name,double costPerUnit) {
+            double totalCost = 0.00;
+            totalCost=costPerUnit*quantity;
+            return totalCost;
+        }
+
         public void addMatriciele(String name, double costPerUnit) {
             int newIdentifier = 1;
 
@@ -88,7 +106,7 @@ public class Resource {
             String newEntry = String.join(",", array);
 
             // Write the new entry to the file
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter("Resources.txt", true))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("Resources.dat", true))) {
                 if (!entries.isEmpty()) {
                     writer.newLine();
                 }
@@ -124,7 +142,7 @@ public class Resource {
             }
 
             // Write the updated entries back to the file
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter("Resources.txt"))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("Resources.dat"))) {
                 for (String updatedEntry : updatedEntries) {
                     writer.write(updatedEntry);
                     writer.newLine();
@@ -137,8 +155,9 @@ public class Resource {
 
         public List<String> getMatriciele() {
             List<String> entries = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new FileReader("Resources.txt"))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader("Resources.dat"))) {
                 String line;
+                
                 while ((line = reader.readLine()) != null) {
                     line = line.trim();
                     if (!line.isEmpty()) {
@@ -150,15 +169,5 @@ public class Resource {
             }
             return entries;
         }
-    }
-
-    public static void main(String[] args) {
-        Resource resource = new Resource(); 
-        Resource.HumanResources hr = resource.new HumanResources();
-        Resource.Logistics lg = resource.new Logistics();
-        Resource.Matricielle mt = resource.new Matricielle();
-
-        mt.updateMatriciele(1, "mk", 5.0);
-        System.out.print(mt);
     }
 }
