@@ -25,11 +25,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
-
+import java.io.IOException;
 public class MyFinalProject {
     private JFrame frame;
     private Resource.Matricielle matricielle;
-
+    private Resource.HumanResources human;
+    private Resource.Logistics log;
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
@@ -43,11 +44,12 @@ public class MyFinalProject {
 
     public MyFinalProject() {
         matricielle = new Resource.Matricielle("default", 0.0);
+       
         initialize();
     }
 
     private void initialize() {
-        frame = new JFrame("OMEGA Company");
+        frame= new JFrame("OMEGA Company");
         frame.setBounds(100, 100, 600, 400);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().setLayout(new BorderLayout());
@@ -59,10 +61,18 @@ public class MyFinalProject {
         JMenu menuProcess = new JMenu("Processes");
         JMenu menuResource = new JMenu("Resources");
 
-        JMenuItem getResource = new JMenuItem("View And Edit Matricielle Resources");
-        JMenuItem addResource = new JMenuItem("Add Matricielle Resource");
-        menuResource.add(getResource);
+        JMenuItem addlogistic = new JMenuItem("Add Logistic Resource");
+        JMenuItem addResource = new JMenuItem("Add Matiere Resource");
+        JMenuItem addHuman = new JMenuItem("Add Human Resource");
+        JMenuItem getHuman = new JMenuItem("View And Edit Human Resources");
+        JMenuItem getResource = new JMenuItem("View And Edit Matiere Resources");
+        JMenuItem getlogistic = new JMenuItem("View And Edit Logistics Resources");
         menuResource.add(addResource);
+        menuResource.add(addHuman);
+        menuResource.add(addlogistic);
+        menuResource.add(getResource);
+        menuResource.add(getHuman);
+        menuResource.add(getlogistic);
         JMenuItem getProcess = new JMenuItem("View Process");
         JMenuItem addProcess = new JMenuItem("Add Process");
         menuProcess.add(addProcess);
@@ -74,6 +84,75 @@ public class MyFinalProject {
         menuBar.add(menuResource);
 
         frame.setJMenuBar(menuBar);
+        addlogistic.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            	JFrame frame=new JFrame();
+            	    JTextField txtlog;
+            	    JTextField txtcost;
+            	     JButton btnNewButton;
+            	       
+            	        frame.setSize(400,400);
+            	
+            	        frame.getContentPane().setLayout(null);
+            	        
+            	        txtlog = new JTextField();
+            	        txtlog.setBounds(80, 40, 119, 20);
+            	        frame.getContentPane().add(txtlog);
+            	        txtlog.setColumns(10);
+            	        
+            	        JLabel lblNewLabel = new JLabel("Logistic");
+            	        lblNewLabel.setBounds(24, 43, 46, 14);
+            	        frame.getContentPane().add(lblNewLabel);
+            	        
+            	        JLabel lblNewLabel_1 = new JLabel("Cost");
+            	        lblNewLabel_1.setBounds(24, 86, 46, 14);
+            	        frame.getContentPane().add(lblNewLabel_1);
+            	        
+            	        txtcost = new JTextField();
+            	        txtcost.setBounds(80, 83, 119, 20);
+            	        frame.getContentPane().add(txtcost);
+            	        txtcost.setColumns(10);
+            	        
+            	        btnNewButton = new JButton("Add");
+            	        btnNewButton.setBounds(95, 136, 89, 23);
+            	        frame.getContentPane().add(btnNewButton);
+            	        frame.setVisible(true);
+            	        btnNewButton.addActionListener(new ActionListener() {
+            	        	public void actionPerformed(ActionEvent e) {
+            	        	           String name = txtlog.getText();    
+            	        	           double costPerUnit = Double.parseDouble(txtcost.getText());
+            	        	           log.addlog(name, costPerUnit);
+            	        	           frame.dispose();
+            	        	        	}
+            	        	        });           	        		    
+            }
+        });
+         
+        getlogistic.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFrame viewFrame = new JFrame("View And Edit Logistics Resources");
+                viewFrame.setSize(800, 600);
+
+                String[] columnNames = {"Identifier", "Name", "Cost", "Update"};
+                DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
+                JTable table = new JTable(tableModel);
+
+                List<String> entries = log.getLogistic();
+                for (String entry : entries) {
+                    String[] data = entry.split(",");
+                    tableModel.addRow(new Object[]{data[0], data[1], data[2], "Update"});
+                }
+
+                TableColumnModel columnModel = table.getColumnModel();
+                columnModel.getColumn(3).setCellRenderer(new ButtonRenderer());
+                columnModel.getColumn(3).setCellEditor(new ButtonEditor(new JTextField(), matricielle, tableModel));
+
+                JScrollPane scrollPane = new JScrollPane(table);
+                viewFrame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+                viewFrame.setVisible(true);
+            }
+        });
+        //Resource Addition (Matiere Resource)
         addResource.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFrame addFrame = new JFrame("Add Matricielle Resource");
@@ -331,9 +410,10 @@ public class MyFinalProject {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-}
+   
+    
 
+}
 class ButtonRenderer extends JButton implements TableCellRenderer {
     public ButtonRenderer() {
         setText("Update");
@@ -381,4 +461,60 @@ class ButtonEditor extends AbstractCellEditor implements TableCellEditor, Action
         fireEditingStopped();
     }
 }
+//update human////////////////////////////////
+
+
+class ButtonRenderer1 extends JButton implements TableCellRenderer {
+    public ButtonRenderer1() {
+        setText("Update");
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value,
+                                                   boolean isSelected, boolean hasFocus, int row, int column) {
+        return this;
+    }
+}
+class ButtonEditor1 extends AbstractCellEditor implements TableCellEditor, ActionListener {
+    private JButton button;
+    private Resource.HumanResources human;
+    private DefaultTableModel tableModel;
+    private int row;
+
+    public ButtonEditor1(JTextField textField, Resource.HumanResources human, DefaultTableModel tableModel) {
+        super();
+        this.human = human;
+        this.tableModel = tableModel;
+        button = new JButton("Update");
+        button.addActionListener(this);
+    }
+
+    @Override
+    public Component getTableCellEditorComponent(JTable table, Object value,
+                                                 boolean isSelected, int row, int column) {
+        this.row = row;
+        return button;
+    }
+
+    @Override
+    public Object getCellEditorValue() {
+        return "Update";
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        int identifier = Integer.parseInt((String) tableModel.getValueAt(row, 0));
+        String newName = (String) tableModel.getValueAt(row, 1);
+        double newduration = Double.parseDouble((String) tableModel.getValueAt(row, 2));
+        double newcost = Double.parseDouble((String) tableModel.getValueAt(row, 3));
+        human.updateHuman(identifier, newName,newduration,newcost );
+        fireEditingStopped();
+    }
+}
+
+
+}
+
+
+
 
