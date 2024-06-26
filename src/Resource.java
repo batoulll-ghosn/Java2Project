@@ -2,7 +2,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
-public class Resource {
+public class Resource implements Serializable,Comparable<Resource>{
     static int next = 1;
     int d;
     private int identifier;
@@ -27,12 +27,16 @@ public class Resource {
     public double totalResourceCost(double matCost, double humanCost, double logisticCost) {
         return matCost + humanCost + logisticCost;
     }
-
+    
+ 
+   public int compareTo(Resource r) {
+	   return this.identifier-r.identifier;
+   }
     public static class Logistics extends Resource {
         public Logistics(String name, double logisticCost) {
             super(name, logisticCost);
         }
-
+       
         public Set<String> getLogistics() {
             File logisticsFile = new File("logistics.txt");
             Set<String> lines = new HashSet<>();
@@ -51,15 +55,8 @@ public class Resource {
             return lines;
         }
 
-        public double logisticsCost(String name) {
-            Set<String> lines = getLogistics();
-            for (String line : lines) {
-                String[] parts = line.split(", ");
-                if (parts.length == 3 && parts[1].equals(name)) {
-                    return Double.parseDouble(parts[2]);
-                }
-            }
-            return 0.0;
+        public double logisticsCost(Resource r) {
+            return r.costPerUnit;
         }
 
         public void addLog(String name, double cost) {
@@ -105,8 +102,11 @@ public class Resource {
     }
 
     public static class Matrielle extends Resource {
-        public Matrielle(String name, double unitCost) {
+        private double unitCost;
+        private double quantity;
+		public Matrielle(String name, double unitCost,int q) {
             super(name, unitCost);
+            this.quantity=q;
         }
 
         public Set<String> getMat() {
@@ -127,15 +127,8 @@ public class Resource {
             return lines;
         }
 
-        public double matCost(String name, double quantity) {
-            Set<String> lines = getMat();
-            for (String line : lines) {
-                String[] parts = line.split(", ");
-                if (parts.length == 3 && parts[1].equals(name)) {
-                    return Double.parseDouble(parts[2]) * quantity;
-                }
-            }
-            return 0.0;
+        public double matCost(Resource.Matrielle r) {
+            return r.unitCost*r.quantity;
         }
 
         public void addMat(String name, double cost) {
@@ -179,9 +172,12 @@ public class Resource {
     }
 
     public static class HumanRes extends Resource {
-        public HumanRes(String name, double cost) {
+    	private double q = 0.0;
+		private double cost = 0.0;
+		private double quantity;
+        public HumanRes(String name, double cost,int q) {
             super(name, cost);
-        }
+            this.quantity=q;       }
 
         public Set<String> getHumans() {
             File humansFile = new File("humans.txt");
@@ -201,15 +197,8 @@ public class Resource {
             return lines;
         }
 
-        public double employeeCost(String name, double workingHours) {
-            Set<String> lines = getHumans();
-            for (String line : lines) {
-                String[] parts = line.split(", ");
-                if (parts.length == 3 && parts[1].equals(name)) {
-                    return Double.parseDouble(parts[2]) * workingHours;
-                }
-            }
-            return 0.0;
+        public double employeeCost(Resource.HumanRes rh) {
+        	return rh.q*rh.cost;
         }
 
         public void addHumanR(String name, double cost) {
@@ -259,7 +248,7 @@ public class Resource {
 
         logistics.updateLog(1, "UpdatedSampleItem", 20.0);
 
-        double cost = logistics.logisticsCost("SampleItem2");
+        double cost = logistics.logisticsCost(logistics);
         System.out.println("Logistics cost for SampleItem2: " + cost);
 
         Set<String> logEntries = logistics.getLogistics();

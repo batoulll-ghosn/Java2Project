@@ -11,23 +11,32 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class Tasks implements Serializable, Comparable<Tasks> {
+	
+    private static final long serialVersionUID = 1L;
     private int identifier;
-    private List<String> processus;
+    private Set<Process> processus;
     private double cost;
+    private static int next = 1;
     private String state;
-    private long duration; // Using long to represent time in milliseconds
+    private String name;
+    private String duration; // Using long to represent time in milliseconds
 
-    public Tasks(int identifier) {
-        this.identifier = identifier;
-        this.processus = new ArrayList<>();
-        this.cost = 0.0;
-        this.state = "initial";
-        this.duration = 0;
+    public Tasks(String name,Set<Process> p ,double cost, String state,String duration) {
+       
+        this.identifier = next++;
+        this.processus = p;
+        this.name=name;
+        this.cost = cost;
+        this.state = state;
+        this.duration = duration;
     }
-
+    public Set<Process> getProcesses() {
+        return this.processus;
+    }
     public void addTask(Tasks task) {
         boolean fileExists = new File("task.txt").exists();
         try (ObjectOutputStream os = fileExists 
@@ -40,12 +49,12 @@ public class Tasks implements Serializable, Comparable<Tasks> {
             e.printStackTrace();
         }
     }
-
+    
     public void deleteTask(String task) {
         processus.remove(task);
     }
 
-    public Set<Tasks> getTask() {
+    public static Set<Tasks> getTask() {
     	Set<Tasks> myTasks = new TreeSet<>();
         try (ObjectInputStream is = new ObjectInputStream(new FileInputStream("task.txt"))) {
             while (true) {
@@ -69,8 +78,8 @@ public class Tasks implements Serializable, Comparable<Tasks> {
     
     }
 
-    public void calculCost(double costPerTask) {
-        this.cost = processus.size() * costPerTask;
+    public double calculCost(String name) {
+        return this.cost;
     }
 
     public void updateStatus(String newState) {
@@ -80,7 +89,9 @@ public class Tasks implements Serializable, Comparable<Tasks> {
     public int getIdentifier() {
         return identifier;
     }
-
+    public String getName() {
+        return name;
+    }
     public double getCost() {
         return cost;
     }
@@ -89,13 +100,11 @@ public class Tasks implements Serializable, Comparable<Tasks> {
         return state;
     }
 
-    public long getDuration() {
+    public String getDuration() {
         return duration;
     }
 
-    public void setDuration(long duration) {
-        this.duration = duration;
-    }
+    
 
     @Override
     public String toString() {
@@ -112,14 +121,6 @@ public class Tasks implements Serializable, Comparable<Tasks> {
         return Integer.compare(this.identifier, other.identifier);
     }
     public static void main(String[] args) {
-        // Example usage:
-        Tasks task = new Tasks(1);
-        task.addTask(task);
-        task.addTask(task);
-        task.calculCost(100.0);
-        task.updateStatus("In Progress");
-        task.setDuration(3600000);  
-
-        System.out.println(task);
+     
     }
 }

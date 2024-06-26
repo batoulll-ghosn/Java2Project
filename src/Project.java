@@ -5,32 +5,31 @@ import java.util.TreeSet;
 import java.util.ArrayList;
 
 public class Project implements Serializable, Comparable<Project> {
-
-
+    private static final long serialVersionUID = 1L;
+	private static int next = 1;
     private int identifier;
     private Set<Tasks> tasks;
     private String stateOfImp;
     private double cost;
-    private double duration;
-
+    private int duration;
+    private String name;
     // Constructor
-    public Project(int identifier, Set<Tasks> tasks, String stateOfImp, double cost, double duration) {
-        this.identifier = identifier;
+    public Project(String name, Set<Tasks> tasks, String stateOfImp, double cost, int duration) {
+    	this.identifier = next++;
         this.tasks = tasks;
+        this.name=name;
         this.stateOfImp = stateOfImp;
         this.cost = cost;
         this.duration = duration;
     }
-
     // Constructor with only identifier
     public Project(int identifier) {
         this.identifier = identifier;
         this.tasks = new TreeSet<>();
         this.stateOfImp = "";
         this.cost = 0.0;
-        this.duration = 0.0;
+        this.duration = 0;
     }
-
     // Getter and Setter methods
     public int getIdentifier() {
         return identifier;
@@ -67,8 +66,13 @@ public class Project implements Serializable, Comparable<Project> {
     public double getDuration() {
         return duration;
     }
-
-    public void setDuration(double duration) {
+    public String getState() {
+        return this.stateOfImp;
+    }
+    public String getName() {
+        return this.name;
+    }
+    public void setDuration(int duration) {
         this.duration = duration;
     }
 
@@ -120,7 +124,7 @@ public class Project implements Serializable, Comparable<Project> {
     }
 
     // Method to update the project details
-    public void updateProject(int identifier, Set<Tasks> tasks, String stateOfImp, double cost, double duration) {
+    public void updateProject(int identifier, Set<Tasks> tasks, String stateOfImp, double cost, int duration) {
         this.identifier = identifier;
         this.tasks = tasks;
         this.stateOfImp = stateOfImp;
@@ -146,10 +150,7 @@ public class Project implements Serializable, Comparable<Project> {
 
     public static void main(String[] args) {
         // Example usage:
-        Project project = new Project(1, new TreeSet<>(), "Initial", 100.0, 3600000);
-        addProject(project);
-        project.updateStatus("In Progress");
-        System.out.println(project);
+      
     }
 }
 
