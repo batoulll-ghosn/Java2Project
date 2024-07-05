@@ -1,83 +1,72 @@
-import java.io.EOFException;
-import java.io.NotSerializableException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
-public class Tasks implements Serializable, Comparable<Tasks> {
-	
-    private static final long serialVersionUID = 1L;
+public class Tasks extends ObservableEntity implements Serializable, Comparable<Tasks> {
     private int identifier;
     private Set<Process> processus;
     private double cost;
     private static int next = 1;
     private String state;
     private String name;
-    private String duration; // Using long to represent time in milliseconds
-
-    public Tasks(String name,Set<Process> p ,double cost, String state,String duration) {
-       
+    private String duration; 
+    private static Set<Tasks> taskSet = new HashSet<>(); // Changed to LinkedHashSet
+    private static final String FILE_NAME = "tasks.dat";
+    public Tasks(String name, Set<Process> p, double cost, String state, String duration) {
         this.identifier = next++;
         this.processus = p;
-        this.name=name;
+        this.name = name;
         this.cost = cost;
         this.state = state;
         this.duration = duration;
     }
+
     public Set<Process> getProcesses() {
         return this.processus;
     }
-    public void addTask(Tasks task) {
-        boolean fileExists = new File("task.txt").exists();
-        try (ObjectOutputStream os = fileExists 
-                ? new AppendableObjectOutputStream(new FileOutputStream("task.txt", true))
-                : new ObjectOutputStream(new FileOutputStream("task.txt"))) {
-            os.writeObject(task);
-            System.out.println("Task added successfully!");
-        }catch (NotSerializableException n) {}
-        catch (IOException e) {
-            e.printStackTrace();
+    public static void addTask(Tasks task) {
+        Set<Tasks> taskSet = getTask();
+        taskSet.add(task);
+        System.out.println("New process added: " + task);
+        System.out.println("Updated process set: " + taskSet);
+        try {
+            // Write the updated taskSet to the file
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME));
+            oos.writeObject(taskSet);
+            oos.flush();
+            oos.close();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
         }
-    }
-    
-    public void deleteTask(String task) {
-        processus.remove(task);
+        Set<Process> emptySet = new HashSet<>();
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("process.dat"));
+            oos.writeObject(emptySet);
+            oos.flush();
+            oos.close();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
     }
 
     public static Set<Tasks> getTask() {
-    	Set<Tasks> myTasks = new TreeSet<>();
-        try (ObjectInputStream is = new ObjectInputStream(new FileInputStream("task.txt"))) {
-            while (true) {
-                try {
-                    Object x = is.readObject();
-                    if (x instanceof Tasks) {
-                        myTasks.add((Tasks) x);
-                    }
-                } catch (EOFException eof) {
-                    break; // End of file reached
-                }
+        try {
+            File processFile = new File(FILE_NAME);
+            if (processFile.exists()) {
+                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(processFile));
+                taskSet = (Set<Tasks>) ois.readObject();
+                ois.close();
+            } else {
+            	taskSet = new HashSet<>(); 
             }
-        } catch (ClassNotFoundException cnfe) {
-            System.out.println("Class Not Found Exception");
-        } catch (FileNotFoundException nfne) {
-            System.out.println("YOUR FILE IS NOT FOUND!!");
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return myTasks;
-    
+        return taskSet;
     }
-
+    
     public double calculCost(String name) {
         return this.cost;
     }
@@ -108,13 +97,11 @@ public class Tasks implements Serializable, Comparable<Tasks> {
 
     @Override
     public String toString() {
-        return "Task{" +
-                "identifier=" + identifier +
-                ", processus=" + processus +
-                ", cost=" + cost +
+        return "Task" +name+
+                "cost=" + cost +
                 ", state='" + state + '\'' +
-                ", duration=" + duration +
-                '}';
+                ", duration=" + duration 
+                ;
     }
     @Override
     public int compareTo(Tasks other) {

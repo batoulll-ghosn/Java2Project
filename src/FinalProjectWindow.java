@@ -1,13 +1,13 @@
 import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.EventQueue;
+import java.awt.FlowLayout;
+import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
-import javax.swing.AbstractCellEditor;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -17,19 +17,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Set;
-import java.util.TreeSet;
+import javax.swing.table.TableRowSorter;
 import java.util.*;
-public class FinalProjectWindow {
+public class FinalProjectWindow extends JFrame {
     private JFrame frame;
     private Process process;
     private Project project;
@@ -43,15 +36,14 @@ public class FinalProjectWindow {
     private Resource.Matrielle matricielle;
     private Resource.HumanRes human;
     private Resource.Logistics log;
+    double CostPr=0.0;
     public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
             try {
             	FinalProjectWindow window = new FinalProjectWindow();
                 window.frame.setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
     }
 
     public FinalProjectWindow() {
@@ -60,7 +52,7 @@ public class FinalProjectWindow {
     	 r= new Resource("",0.0);
         matricielle = new Resource.Matrielle("", 0.0,1);
         log = new Resource.Logistics(" ",0.0);
-        human=new Resource.HumanRes("",0.0,1);
+        human=new Resource.HumanRes("",0.0,"","",1);
         initialize();
     }
     private void initialize() {
@@ -75,19 +67,21 @@ public class FinalProjectWindow {
         JMenu menuTask = new JMenu("Tasks");
         JMenu menuProcess = new JMenu("Processes");
         JMenu menuResource = new JMenu("Resources");
-
+        JMenu menuEx = new JMenu("Execute");
         JMenuItem addlogistic = new JMenuItem("Add Logistic Resource");
         JMenuItem addResource = new JMenuItem("Add Matiere Resource");
         JMenuItem addHuman = new JMenuItem("Add Human Resource");
         JMenuItem getHuman = new JMenuItem("View Human Resources");
         JMenuItem getResource = new JMenuItem("View Matiere Resources");
         JMenuItem getlogistic = new JMenuItem("View Logistics Resources");
-       
+ 
         menuBar.add(menuFile);
         menuBar.add(menuProject);
         menuBar.add(menuTask);
         menuBar.add(menuProcess);
         menuBar.add(menuResource);
+        menuBar.add(menuEx);
+   
         menuResource.add(addResource);
         menuResource.add(addHuman);
         menuResource.add(addlogistic);
@@ -107,8 +101,152 @@ public class FinalProjectWindow {
         menuProject.add(addProject);
         menuProject.add(getProject);
         frame.setJMenuBar(menuBar);
-        //Human Resources 
+        frame.getContentPane().setLayout(new FlowLayout());
+        TableRowSorter<DefaultTableModel> sorter;
+        JMenuItem executeProjectItem = new JMenuItem("Execute Project");
+
+        menuEx.add(executeProjectItem);
+        menuBar.add(menuEx);
+        frame.setJMenuBar(menuBar);
+       
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////// ComboBoxes for the main frame 
+        Set<Project> projectsSET = Project.getProject();
         
+        DefaultComboBoxModel<Project> projectComboBoxModel = new DefaultComboBoxModel<>();
+        projectComboBoxModel.addElement(null);
+        for (Project project : projectsSET) {
+            projectComboBoxModel.addElement(project);
+        }
+        JComboBox<Project> projectComboBox = new JComboBox<>(projectComboBoxModel);
+
+        // ComboBox of tasks
+        DefaultComboBoxModel<Tasks> tasksComboBoxModel = new DefaultComboBoxModel<>();
+        JComboBox<Tasks> tasksComboBox = new JComboBox<>(tasksComboBoxModel);
+        executeProjectItem.addActionListener(e -> {
+            // Assuming the first project in the list is selected
+        	
+            Project selectedProject = (Project) projectComboBox.getSelectedItem();
+		       if(selectedProject==null){ 
+		    	   System.out.print("You need to select a project to execute it");
+			   }
+            else {
+            JFrame taskFrame = new JFrame("Executing Project");
+            taskFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            taskFrame.setSize(400, 300);
+
+            JPanel taskPanel = new JPanel();
+            taskPanel.setLayout((LayoutManager) new BoxLayout(taskPanel, BoxLayout.Y_AXIS));
+            taskFrame.setContentPane(taskPanel);
+
+            JLabel executingLabel = new JLabel("Executing...");
+            taskPanel.add(executingLabel);
+
+         
+            for (Tasks task : selectedProject.getTasks()) {
+                JLabel taskLabel = new JLabel(task.toString());
+                taskPanel.add(taskLabel);
+
+                for (Process process : task.getProcesses()) {
+                    JLabel processLabel = new JLabel("    " + process.toString());
+                    taskPanel.add(processLabel);
+                }
+
+               
+            }
+
+            JLabel totalCostLabel = new JLabel("Total Cost: " + selectedProject.getCost());
+            taskPanel.add(totalCostLabel);
+
+            taskFrame.setVisible(true);
+          }
+        });
+
+        DefaultComboBoxModel<Process> processComboBoxModel = new DefaultComboBoxModel<>();
+        JComboBox<Process> processComboBox = new JComboBox<>(processComboBoxModel);
+        // Add an ActionListener to the projectComboBox
+        
+        
+        projectComboBox.addActionListener(new ActionListener() {
+        	
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Project selectedProject = (Project) projectComboBox.getSelectedItem();
+                CostPr=selectedProject.getCost();
+                JLabel lblName = new JLabel("Cost Of Project : "+CostPr);
+                lblName.setBounds(10, 375, 200, 25);
+                frame.getContentPane().add(lblName, BorderLayout.SOUTH);
+                tasksComboBoxModel.removeAllElements();
+                tasksComboBoxModel.addElement(null); 
+                if (selectedProject != null) {
+                    for (Tasks task : selectedProject.getTasks()) { 
+                        tasksComboBoxModel.addElement(task);
+                    }
+                }
+                tasksComboBox.setSelectedItem(null); 
+            }
+        });
+
+        tasksComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Tasks selectedTask = (Tasks) tasksComboBox.getSelectedItem();
+                processComboBoxModel.removeAllElements();
+                processComboBoxModel.addElement(null); // Add null as the first element
+                if (selectedTask != null) {
+                    for (Process process : selectedTask.getProcesses()) { // Assuming getProcesses() returns a Set<Process>
+                        processComboBoxModel.addElement(process);
+                    }
+                }
+                processComboBox.setSelectedItem(null); // Set selected item to null
+            }
+        });
+        JTable table = new JTable();
+        DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Type of Resource", "Resource Taken"}, 0);
+        table.setModel(tableModel);
+
+        processComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (processComboBox.getSelectedItem() != null) {
+                    Process cmbProcess = (Process) processComboBox.getSelectedItem();
+                    TreeMap<String, TreeSet<?>> rcsp = cmbProcess.getResources();
+                    tableModel.setRowCount(0);  // Clear previous rows
+
+                    for (String key : rcsp.keySet()) {
+                        Set<?> values = rcsp.get(key);
+                        
+                        // Iterate through the set to get the names of the resources
+                        StringBuilder names = new StringBuilder();
+                        StringBuilder costs = new StringBuilder();
+                        for (Object value : values) {
+                            if (value instanceof Resource) {
+                                Resource resource = (Resource) value;
+                                names.append(resource.getName()).append(", ");
+                                costs.append(resource.getUnitCost()).append(", ");
+                            }
+                        }
+                        
+                        // Remove the trailing comma and space
+                        if (names.length() > 0) {
+                            names.setLength(names.length() - 2);
+                        }
+                        String g=names.toString()+ " " +costs.toString();
+                        tableModel.addRow(new Object[]{key, g});
+                    }
+
+                }
+            }
+        });
+      
+        frame.getContentPane().add(projectComboBox);
+        frame.getContentPane().add(tasksComboBox);
+        frame.getContentPane().add(processComboBox);
+        JScrollPane scrollPane_1 = new JScrollPane(table);
+        frame.getContentPane().add(scrollPane_1, "Center");
+        //Human Resources 
         addHuman.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFrame addFrame = new JFrame("Add Human Resources");
@@ -132,15 +270,33 @@ public class FinalProjectWindow {
                 txtCostPerUnit.setBounds(100, 70, 160, 25);
                 panel.add(txtCostPerUnit);
 
+                JLabel sp = new JLabel("Speciality:");
+                sp.setBounds(10, 100, 80, 25);
+                panel.add(sp);
+
+                JTextField sptxt = new JTextField();
+                sptxt.setBounds(100, 100, 160, 25);
+                panel.add(sptxt);
+
+                JLabel fn = new JLabel("Function");
+                fn.setBounds(10, 130, 80, 25);
+                panel.add(fn);
+
+                JTextField fntxt = new JTextField();
+                fntxt.setBounds(100, 130, 160, 25);
+                panel.add(fntxt);
+
                 JButton btnAdd = new JButton("Add");
-                btnAdd.setBounds(100, 100, 80, 25);
+                btnAdd.setBounds(100, 200, 80, 25);
                 panel.add(btnAdd);
 
                 btnAdd.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         String name = txtName.getText();
                         double costPerUnit = Double.parseDouble(txtCostPerUnit.getText());
-                        human.addHumanR(name, costPerUnit);
+                        String function=fntxt.getText();
+                        String speciality=sptxt.getText();
+                        human.addHumanR(name, costPerUnit,speciality,function);
                         addFrame.dispose();
                     }
                 });
@@ -153,6 +309,16 @@ public class FinalProjectWindow {
             public void actionPerformed(ActionEvent e) {
                 JFrame viewFrame = new JFrame("View Human Resources");
                 viewFrame.setSize(800, 600);
+                TableRowSorter<DefaultTableModel> sorter;
+        		
+        		JTextField textField = new JTextField();
+        		textField.setBounds(74, 450, 103, 20);
+        		viewFrame.getContentPane().add(textField);
+        		textField.setColumns(10);
+        		
+        		JButton btnNewButton = new JButton("Filtrage");
+        		btnNewButton.setBounds(187, 450, 80, 23);
+        		viewFrame.getContentPane().add(btnNewButton);
 
                 String[] columnNames = {"Name", "Cost"};
                 DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
@@ -168,7 +334,22 @@ public class FinalProjectWindow {
               
                
                 JScrollPane scrollPane = new JScrollPane(table);
-                viewFrame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+                scrollPane.setBounds(10, 103, 712, 260);
+                sorter = new TableRowSorter<>(tableModel);
+                btnNewButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                    	   String filter = textField.getText();
+                           //sorter = new TableRowSorter<>(model);
+                           RowFilter<DefaultTableModel, Object> rf = null;
+                           rf = RowFilter.regexFilter(filter);
+                           sorter.setRowFilter(rf);
+                           table.setRowSorter(sorter);
+                    
+                    		
+                    		
+                    }
+                });
+                viewFrame.getContentPane().add(scrollPane);
                 viewFrame.setVisible(true);
             }
         });
@@ -178,6 +359,16 @@ public class FinalProjectWindow {
             public void actionPerformed(ActionEvent e) {
                 JFrame viewFrame = new JFrame("View Logistics Resources");
                 viewFrame.setSize(800, 600);
+                TableRowSorter<DefaultTableModel> sorter;
+                
+                JTextField textField = new JTextField();
+        		textField.setBounds(74, 450, 103, 20);
+        		viewFrame.getContentPane().add(textField);
+        		textField.setColumns(10);
+        		
+        		JButton btnNewButton = new JButton("Filtrage");
+        		btnNewButton.setBounds(187, 450, 80, 23);
+        		viewFrame.getContentPane().add(btnNewButton);
 
                 String[] columnNames = {"Name", "Cost"};
                 DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
@@ -194,6 +385,20 @@ public class FinalProjectWindow {
                 }
 
                 JScrollPane scrollPane = new JScrollPane(table);
+                sorter = new TableRowSorter<>(tableModel);
+                btnNewButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                    	   String filter = textField.getText();
+                           //sorter = new TableRowSorter<>(model);
+                           RowFilter<DefaultTableModel, Object> rf = null;
+                           rf = RowFilter.regexFilter(filter);
+                           sorter.setRowFilter(rf);
+                           table.setRowSorter(sorter);
+                    
+                    		
+                    		
+                    }
+                });
                 viewFrame.getContentPane().add(scrollPane, BorderLayout.CENTER);
                 viewFrame.setVisible(true);
             }
@@ -285,6 +490,16 @@ public class FinalProjectWindow {
             public void actionPerformed(ActionEvent e) {
                 JFrame viewFrame = new JFrame("View Matricielle Resources");
                 viewFrame.setSize(800, 600);
+                TableRowSorter<DefaultTableModel> sorter;
+                
+                JTextField textField = new JTextField();
+        		textField.setBounds(74, 450, 103, 20);
+        		viewFrame.getContentPane().add(textField);
+        		textField.setColumns(10);
+        		
+        		JButton btnNewButton = new JButton("Filtrage");
+        		btnNewButton.setBounds(187, 450, 80, 23);
+        		viewFrame.getContentPane().add(btnNewButton);
 
                 String[] columnNames = {"Name", "Cost per Unit"};
                 DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
@@ -298,9 +513,22 @@ public class FinalProjectWindow {
                     tableModel.addRow(new Object[]{data[1], data[2]});
                 }
 
-                TableColumnModel columnModel = table.getColumnModel();
-              
-                               JScrollPane scrollPane = new JScrollPane(table);
+                TableColumnModel columnModel = table.getColumnModel();             
+                JScrollPane scrollPane = new JScrollPane(table);
+                sorter = new TableRowSorter<>(tableModel);
+                btnNewButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                    	   String filter = textField.getText();
+                           //sorter = new TableRowSorter<>(model);
+                           RowFilter<DefaultTableModel, Object> rf = null;
+                           rf = RowFilter.regexFilter(filter);
+                           sorter.setRowFilter(rf);
+                           table.setRowSorter(sorter);
+                    
+                    		
+                    		
+                    }
+                });
                 viewFrame.getContentPane().add(scrollPane, BorderLayout.CENTER);
                 viewFrame.setVisible(true);
             }
@@ -432,7 +660,7 @@ public class FinalProjectWindow {
                         	int q=Integer.parseInt(d);
                             try {
                                 if (checkBox.isSelected() && d!=" ") {
-                                    human=new Resource.HumanRes(data[1],cost,q);
+                                    human=new Resource.HumanRes(data[1],cost,data[3],data[4],q);
                                     humSet.add(human);
                                  System.out.println("ADDED! " + humSet);
                                  int size =humSet.size();
@@ -519,20 +747,23 @@ public class FinalProjectWindow {
                                     logCost = log.logisticsCost(r);
                                     sumlog += logCost; 
                                 }
-                                //System.out.println("Total logistics cost: " + sumlog);
+                                System.out.println("Total logistics cost: " + sumlog);
                                // System.out.println("Resource log: " + resourceLog);
                             }
                             if (st.equals("ResourceMat")) {  
                                 Set<?> resourceMat = resourceMap.get(st);
-                                Iterator<?> it1 = resourceMat.iterator();
+                                Iterator<?> it2 = resourceMat.iterator();
                                 
-                                while (it1.hasNext()) {
-                                    Object data = it1.next();
+                                while (it2.hasNext()) {
+                                    Object data = it2.next();
                                     Resource.Matrielle r = (Resource.Matrielle) data;
                                     MatCost = matricielle.matCost(r);
+                                    double q=matricielle.getQuantity(r);
+                                    System.out.println("Total q: " + q);
+                                    System.out.println("Total cost: " + MatCost);
                                     sumMat += MatCost; 
                                 }
-                                //System.out.println("Total logistics cost: " + sumlog);
+                                System.out.println("Total mat cost: " + sumMat);
                                // System.out.println("Resource log: " + resourceLog);
                             }
                             if (st.equals("ResourceHuman")) {  
@@ -542,10 +773,11 @@ public class FinalProjectWindow {
                                 while (it1.hasNext()) {
                                     Object data = it1.next();
                                     Resource.HumanRes rh = (Resource.HumanRes) data;
-                                    HumanCost = human.employeeCost(rh);
+                                    HumanCost = rh.employeeCost();
                                     sumHum += HumanCost; 
                                 }
-                                //System.out.println("Total logistics cost: " + sumlog);
+                                System.out.println("Total human: " + sumHum);
+                                System.out.println("Total human: " + st);
                                // System.out.println("Resource log: " + resourceLog);
                             }
                         }
@@ -569,22 +801,47 @@ public class FinalProjectWindow {
             public void actionPerformed(ActionEvent e) {
                 JFrame viewFrame = new JFrame("View Processes");
                 viewFrame.setSize(800, 600);
+                TableRowSorter<DefaultTableModel> sorter;
+                
+                JTextField textField = new JTextField();
+        		textField.setBounds(74, 450, 103, 20);
+        		viewFrame.getContentPane().add(textField);
+        		textField.setColumns(10);
+        		
+        		JButton btnNewButton = new JButton("Filtrage");
+        		btnNewButton.setBounds(187, 450, 80, 23);
+        		viewFrame.getContentPane().add(btnNewButton);
+
 
                 Set<Process> processes = Process.getProcess();
 
-                String[] columnNames ={"Process Name","State", "Duration"};
+                String[] columnNames ={"Process Name","State", "Duration","Cost"};
                 DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
 
                 for (Process process : processes) {
                     StringBuilder resourcesStr = new StringBuilder();
                   
-                    Object[] rowData = {process.getName(),process.getState(), process.getDuration()};
+                    Object[] rowData = {process.getName(),process.getState(), process.getDuration(),process.getCost()};
                     tableModel.addRow(rowData);
                 }
 
                 JTable table = new JTable(tableModel);
                 JScrollPane scrollPane = new JScrollPane(table);
-                viewFrame.add(scrollPane, BorderLayout.CENTER);
+                viewFrame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+                sorter = new TableRowSorter<>(tableModel);
+                btnNewButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                    	   String filter = textField.getText();
+                           //sorter = new TableRowSorter<>(model);
+                           RowFilter<DefaultTableModel, Object> rf = null;
+                           rf = RowFilter.regexFilter(filter);
+                           sorter.setRowFilter(rf);
+                           table.setRowSorter(sorter);
+                    
+                    		
+                    		
+                    }
+                });
 
                 viewFrame.setVisible(true);
             }
@@ -615,13 +872,7 @@ public class FinalProjectWindow {
                 txtState.setBounds(100, 50, 160, 25);
                 panel.add(txtState);
 
-                JLabel lblDuration = new JLabel("Duration:");
-                lblDuration.setBounds(10, 90, 80, 25);
-                panel.add(lblDuration);
-
-                JTextField txtDuration = new JTextField();
-                txtDuration.setBounds(100, 90, 160, 25);
-                panel.add(txtDuration);
+   
 
                 JLabel lblMtResources = new JLabel("Processes");
                 lblMtResources.setBounds(10, 140, 140, 40);
@@ -631,10 +882,10 @@ public class FinalProjectWindow {
                 Set<Process> processes = process.getProcess(); // Assuming this is not null
                 int yPositionn = 180; // Starting Y position for checkboxes
                 int yOffsettt = 40; // Vertical offset between checkboxes
-
+                Set<Process> processesAdded = new TreeSet<>();
                 for (Process entry : processes) {
                     String name = entry.getName();
-                    TreeMap<String, TreeSet<?>> rscMap = entry.getResource();
+                    TreeMap<String, TreeSet<?>> rscMap = entry.getResources();
                     double cost = entry.getCost();
                     String state = entry.getState();
                     int duration = entry.getDuration();
@@ -650,10 +901,14 @@ public class FinalProjectWindow {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             try {
-                                if (checkBox.isSelected()) {
+                                if ((checkBox.isSelected()) != false) {
                                     Process newProcess = new Process(name, rscMap, cost, state, duration);
-                                    processes.add(newProcess);
+                                    processesAdded.add(newProcess);
                                     System.out.println("ADDED! " + newProcess);
+                                } else {
+                                    // Remove the process if the checkbox is deselected
+                                	processesAdded.removeIf(p -> p.getName().equals(name));
+                                    System.out.println("REMOVED! " + name);
                                 }
                             } catch (ClassCastException cce) {
                                 cce.printStackTrace();
@@ -664,8 +919,8 @@ public class FinalProjectWindow {
                             }
                         }
                     });
-                }
-
+                
+}
                 JButton addButton = new JButton("Add Task");
                 addButton.setBounds(10, yPositionn + yOffsettt, 150, 25);
                 panel.add(addButton);
@@ -676,18 +931,23 @@ public class FinalProjectWindow {
                         try {
                             String nameTask = txtName.getText();
                             String stateTask = txtState.getText();
-                            String durationTask = txtDuration.getText();
+                         
                             double sumTask = 0.0;
+                            int durationTask = 0;
 
-                            for (Process pr : processes) {
-                                sumTask += pr.getCost(); // Use a method to get the cost of the process
+                            for (Process pr : processesAdded) { // Ensure Process has a getCost() method
+                                sumTask += pr.getCost();
+                                durationTask += pr.getDuration();
                             }
+
+                            String d = Integer.toString(durationTask);
                             System.out.println("Total Task Cost: " + sumTask);
 
-                            // Create and add the task
-                            Tasks task = new Tasks(nameTask, processes, sumTask, stateTask, durationTask);
+                            Tasks task = new Tasks(nameTask, processesAdded, sumTask, stateTask, d);
+
                             task.addTask(task);
-                            addFrame.dispose();
+                            
+                            addFrame.dispose(); // Ensure addFrame is the correct frame to dispose
                         } catch (NumberFormatException nfe) {
                             nfe.printStackTrace();
                         } catch (NullPointerException npe) {
@@ -695,6 +955,7 @@ public class FinalProjectWindow {
                         }
                     }
                 });
+
 
                 addFrame.getContentPane().add(panel);
                 addFrame.setVisible(true);
@@ -704,8 +965,19 @@ public class FinalProjectWindow {
         //// Get Task
         getTasks.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	TableRowSorter<DefaultTableModel> sorter;
                 JFrame viewFrame = new JFrame("View Tasks");
                 viewFrame.setSize(800, 600);
+                
+                JTextField textField = new JTextField();
+        		textField.setBounds(74, 450, 103, 20);
+        		viewFrame.getContentPane().add(textField);
+        		textField.setColumns(10);
+        		
+        		JButton btnNewButton = new JButton("Filtrage");
+        		btnNewButton.setBounds(187, 450, 80, 23);
+        		viewFrame.getContentPane().add(btnNewButton);
+
 
                 Set<Tasks> tasks = Tasks.getTask();
 
@@ -721,8 +993,21 @@ public class FinalProjectWindow {
 
                 JTable table = new JTable(tableModel);
                 JScrollPane scrollPane = new JScrollPane(table);
-                viewFrame.add(scrollPane, BorderLayout.CENTER);
-
+                viewFrame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+                sorter = new TableRowSorter<>(tableModel);
+                btnNewButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                    	   String filter = textField.getText();
+                           //sorter = new TableRowSorter<>(model);
+                           RowFilter<DefaultTableModel, Object> rf = null;
+                           rf = RowFilter.regexFilter(filter);
+                           sorter.setRowFilter(rf);
+                           table.setRowSorter(sorter);
+                    
+                    		
+                    		
+                    }
+                });
                 viewFrame.setVisible(true);
             }
         });
@@ -732,9 +1017,19 @@ public class FinalProjectWindow {
         //// Get Project
         getProject.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	TableRowSorter<DefaultTableModel> sorter;
                 JFrame viewFrame = new JFrame("View Projects");
                 viewFrame.setSize(800, 600);
-
+                
+                JTextField textField = new JTextField();
+        		textField.setBounds(74, 450, 103, 20);
+        		viewFrame.getContentPane().add(textField);
+        		textField.setColumns(10);
+        		
+        		JButton btnNewButton = new JButton("Filtrage");
+        		btnNewButton.setBounds(187, 450, 80, 23);
+        		viewFrame.getContentPane().add(btnNewButton);
+        		
                 Set<Project> projects = Project.getProject();
 
                 String[] columnNames ={"Project Name","State", "Cost","Duration"};
@@ -746,15 +1041,27 @@ public class FinalProjectWindow {
                     Object[] rowData = {project.getName(),project.getState(), project.getCost(),project.getDuration()};
                     tableModel.addRow(rowData);
                 }
-
                 JTable table = new JTable(tableModel);
                 JScrollPane scrollPane = new JScrollPane(table);
-                viewFrame.add(scrollPane, BorderLayout.CENTER);
-
+                viewFrame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+                sorter = new TableRowSorter<>(tableModel);
+                btnNewButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                    	   String filter = textField.getText();
+                           //sorter = new TableRowSorter<>(model);
+                           RowFilter<DefaultTableModel, Object> rf = null;
+                           rf = RowFilter.regexFilter(filter);
+                           sorter.setRowFilter(rf);
+                           table.setRowSorter(sorter);
+                    
+                    		
+                    		
+                    }
+                });
                 viewFrame.setVisible(true);
             }
         });
-        ////////Add Task 
+        ////////Add Project
         addProject.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFrame addFrame = new JFrame("Add Project");
@@ -778,13 +1085,6 @@ public class FinalProjectWindow {
                 txtState.setBounds(100, 50, 160, 25);
                 panel.add(txtState);
 
-                JLabel lblDuration = new JLabel("Duration:");
-                lblDuration.setBounds(10, 90, 80, 25);
-                panel.add(lblDuration);
-
-                JTextField txtDuration = new JTextField();
-                txtDuration.setBounds(100, 90, 160, 25);
-                panel.add(txtDuration);
 
                 JLabel lblMtResources = new JLabel("Tasks:");
                 lblMtResources.setBounds(10, 140, 140, 40);
@@ -794,7 +1094,7 @@ public class FinalProjectWindow {
                 Set<Tasks> tasks = task.getTask(); // Assuming this is not null
                 int yPositionn = 180; // Starting Y position for checkboxes
                 int yOffsettt = 40; // Vertical offset between checkboxes
-
+                Set<Tasks> tasksAdded = new TreeSet<>(); 
                 for (Tasks entry : tasks) {
                     String name = entry.getName();
                     Set<Process> SetOfProcess = entry.getProcesses();
@@ -815,8 +1115,13 @@ public class FinalProjectWindow {
                             try {
                                 if (checkBox.isSelected()) {
                                     Tasks newTask = new Tasks(name, SetOfProcess, cost, statee, durationn);
-                                    tasks.add(newTask);
+                                    tasksAdded.add(newTask);
                                     System.out.println("ADDED! " + newTask);
+                                }
+                                else {
+                                    // Remove the process if the checkbox is deselected
+                                	tasksAdded.removeIf(p -> p.getName().equals(name));
+                                    System.out.println("REMOVED! " + name);
                                 }
                             } catch (ClassCastException cce) {
                                 cce.printStackTrace();
@@ -829,7 +1134,7 @@ public class FinalProjectWindow {
                     });
                 }
 
-                JButton addButton = new JButton("Add Task");
+                JButton addButton = new JButton("Add Project");
                 addButton.setBounds(10, yPositionn + yOffsettt, 150, 25);
                 panel.add(addButton);
 
@@ -839,17 +1144,23 @@ public class FinalProjectWindow {
                         try {
                             String nameTask = txtName.getText();
                             String stateTask = txtState.getText();
-                            int durationTask = Integer.parseInt(txtDuration.getText());
+                         
                             double sumTask = 0.0;
-
-                            for (Tasks pr : tasks) {
-                                sumTask += pr.getCost(); // Use a method to get the cost of the process
+                            int Duration = 0;
+                            for (Tasks pr : tasksAdded) {
+                                sumTask += pr.getCost(); 
+                               Duration+=Double.parseDouble(pr.getDuration());
                             }
                             System.out.println("Total Task Cost: " + sumTask);
                                String s=String.valueOf(sumTask);
                             // Create and add the task
-                            Project project = new Project(nameTask, tasks,stateTask, sumTask, durationTask);
+                            Project project = new Project(nameTask, tasksAdded,stateTask, sumTask,Duration);
                             project.addProject(project);
+                           
+                            DefaultComboBoxModel<Project> model = (DefaultComboBoxModel<Project>) projectComboBox.getModel();
+                           
+                            model.addElement(project);
+
                             addFrame.dispose();
                         } catch (NumberFormatException nfe) {
                             nfe.printStackTrace();

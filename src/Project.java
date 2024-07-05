@@ -1,11 +1,10 @@
 import java.io.*;
-import java.util.List;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Observable;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.ArrayList;
-
-public class Project implements Serializable, Comparable<Project> {
-    private static final long serialVersionUID = 1L;
+public class Project extends ObservableEntity implements Serializable, Comparable<Project> {
 	private static int next = 1;
     private int identifier;
     private Set<Tasks> tasks;
@@ -14,6 +13,8 @@ public class Project implements Serializable, Comparable<Project> {
     private int duration;
     private String name;
     // Constructor
+    private static final String FILE_NAME = "project.dat";
+    private static Set<Project> projectSet = new HashSet<>(); // Changed to LinkedHashSet
     public Project(String name, Set<Tasks> tasks, String stateOfImp, double cost, int duration) {
     	this.identifier = next++;
         this.tasks = tasks;
@@ -21,28 +22,31 @@ public class Project implements Serializable, Comparable<Project> {
         this.stateOfImp = stateOfImp;
         this.cost = cost;
         this.duration = duration;
+        addProjectToSetAndNotify(this);
     }
     // Constructor with only identifier
-    public Project(int identifier) {
+  /*public Project(int identifier) {
         this.identifier = identifier;
         this.tasks = new TreeSet<>();
         this.stateOfImp = "";
         this.cost = 0.0;
         this.duration = 0;
-    }
+    }*/
     // Getter and Setter methods
     public int getIdentifier() {
         return identifier;
     }
-
+    public Set<Tasks> getTasks() {
+        return this.tasks;
+    }
+   
     public void setIdentifier(int identifier) {
         this.identifier = identifier;
     }
-
-    public Set<Tasks> getTasks() {
-        return tasks;
+    private void addProjectToSetAndNotify(Project project) {
+        projectSet.add(project);
+        notifyObservers(project);
     }
-
     public void setTasks(Set<Tasks> tasks) {
         this.tasks = tasks;
     }
@@ -56,7 +60,7 @@ public class Project implements Serializable, Comparable<Project> {
     }
 
     public double getCost() {
-        return cost;
+        return this.cost;
     }
 
     public void setCost(double cost) {
@@ -75,46 +79,49 @@ public class Project implements Serializable, Comparable<Project> {
     public void setDuration(int duration) {
         this.duration = duration;
     }
-
-    public static void addProject(Project project) {
-        boolean fileExists = new File("project.txt").exists();
-
-        try (ObjectOutputStream os = fileExists 
-                ? new AppendableObjectOutputStream(new FileOutputStream("project.txt", true))
-                : new ObjectOutputStream(new FileOutputStream("project.txt"))) {
-            os.writeObject(project);
-            System.out.println("Project added successfully!");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static Set<Project> getProject() {
-        Set<Project> projects = new TreeSet<>();
-        try (ObjectInputStream is = new ObjectInputStream(new FileInputStream("project.txt"))) {
-            while (true) {
-                try {
-                    Object x = is.readObject();
-                    if (x instanceof Project) {
-                        projects.add((Project) x);
-                    }
-                } catch (EOFException eof) {
-                    break; // End of file reached
-                }
+        try {
+            File prFile = new File(FILE_NAME);
+            if (prFile.exists()) {
+                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(prFile));
+                projectSet = (Set<Project>) ois.readObject();
+                ois.close();
+            } else {
+            	projectSet = new HashSet<>(); 
             }
-        } catch (ClassNotFoundException cnfe) {
-            System.out.println("Class Not Found Exception");
-        } catch (FileNotFoundException nfne) {
-            System.out.println("Your file is not found!!");
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return projects;
+        return projectSet;
     }
-
-    // Method to calculate the total cost
-    public double totalCost() {
-        // Assuming cost calculation based on some logic; here it's simply returning the cost
+    
+    public static void addProject(Project pr) {
+ 
+    	projectSet = getProject();
+    	projectSet.add(pr);
+        System.out.println("New process added: " + pr);
+        System.out.println("Updated process set: " + projectSet);
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME));
+            oos.writeObject(projectSet);
+            oos.flush();
+            oos.close();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+        Set<Tasks> emptySet = new HashSet<>();
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("tasks.dat"));
+            oos.writeObject(emptySet);
+            oos.flush();
+            oos.close();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+        
+    }
+   
+    public double totalCost() { 
         return cost;
     }
 
@@ -122,7 +129,8 @@ public class Project implements Serializable, Comparable<Project> {
     public void updateStatus(String newState) {
         this.stateOfImp = newState;
     }
-
+    
+   
     // Method to update the project details
     public void updateProject(int identifier, Set<Tasks> tasks, String stateOfImp, double cost, int duration) {
         this.identifier = identifier;
@@ -139,17 +147,15 @@ public class Project implements Serializable, Comparable<Project> {
 
     @Override
     public String toString() {
-        return "Project{" +
-                "identifier=" + identifier +
-                ", tasks=" + tasks +
-                ", stateOfImp='" + stateOfImp + '\'' +
-                ", cost=" + cost +
-                ", duration=" + duration +
-                '}';
+        return "Project:" +name+
+                ", stateOfImp =" + stateOfImp + 
+                ", cos =" + cost +
+                ", duration=" + duration+"days" 
+                ;
     }
 
     public static void main(String[] args) {
-        // Example usage:
+        /////
       
     }
 }
