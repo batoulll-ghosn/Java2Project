@@ -1,18 +1,29 @@
 import java.awt.BorderLayout;
+import javax.swing.text.DateFormatter;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
+import java.util.Date;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -37,6 +48,7 @@ public class FinalProjectWindow extends JFrame {
     private Resource.HumanRes human;
     private Resource.Logistics log;
     double CostPr=0.0;
+    long durationPr=12345678910L;
     public static void main(String[] args) {
             try {
             	FinalProjectWindow window = new FinalProjectWindow();
@@ -52,7 +64,7 @@ public class FinalProjectWindow extends JFrame {
     	 r= new Resource("",0.0);
         matricielle = new Resource.Matrielle("", 0.0,1);
         log = new Resource.Logistics(" ",0.0);
-        human=new Resource.HumanRes("",0.0,"","",1);
+        human=new Resource.HumanRes("",0.0,"","",1,0);
         initialize();
     }
     private void initialize() {
@@ -126,8 +138,7 @@ public class FinalProjectWindow extends JFrame {
         DefaultComboBoxModel<Tasks> tasksComboBoxModel = new DefaultComboBoxModel<>();
         JComboBox<Tasks> tasksComboBox = new JComboBox<>(tasksComboBoxModel);
         executeProjectItem.addActionListener(e -> {
-            // Assuming the first project in the list is selected
-        	
+      
             Project selectedProject = (Project) projectComboBox.getSelectedItem();
 		       if(selectedProject==null){ 
 		    	   System.out.print("You need to select a project to execute it");
@@ -278,26 +289,42 @@ public class FinalProjectWindow extends JFrame {
                 sptxt.setBounds(100, 100, 160, 25);
                 panel.add(sptxt);
 
-                JLabel fn = new JLabel("Function");
+                JLabel fn = new JLabel("Function:");
                 fn.setBounds(10, 130, 80, 25);
                 panel.add(fn);
 
                 JTextField fntxt = new JTextField();
                 fntxt.setBounds(100, 130, 160, 25);
                 panel.add(fntxt);
+                JLabel wh = new JLabel("Working Hours:");
+                wh.setBounds(10, 160, 80, 25);
+                panel.add(wh);
 
+                JTextField whtxt = new JTextField();
+                whtxt.setBounds(100, 160, 160, 25);
+                panel.add(whtxt);
+                JLabel lblNote = new JLabel("NOTE: ");
+                lblNote.setBounds(300, 100, 250, 25);
+                panel.add(lblNote);
+                lblNote.setText("The Working Hours Of Full-Time Employee is 180hrs");
                 JButton btnAdd = new JButton("Add");
-                btnAdd.setBounds(100, 200, 80, 25);
+                btnAdd.setBounds(100, 230, 80, 25);
                 panel.add(btnAdd);
 
                 btnAdd.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         String name = txtName.getText();
                         double costPerUnit = Double.parseDouble(txtCostPerUnit.getText());
-                        String function=fntxt.getText();
-                        String speciality=sptxt.getText();
-                        human.addHumanR(name, costPerUnit,speciality,function);
-                        addFrame.dispose();
+                        double wh = Double.parseDouble(whtxt.getText());
+                        String function = fntxt.getText();
+                        String speciality = sptxt.getText();
+
+                        if (wh > 180) {
+                            JOptionPane.showMessageDialog(addFrame, "Working hours cannot be greater than 180.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                        } else {
+                            human.addHumanR(name, costPerUnit, speciality, function, wh);
+                            addFrame.dispose();
+                        }
                     }
                 });
 
@@ -468,7 +495,13 @@ public class FinalProjectWindow extends JFrame {
                 JTextField txtCostPerUnit = new JTextField();
                 txtCostPerUnit.setBounds(100, 70, 160, 25);
                 panel.add(txtCostPerUnit);
+                JLabel lblStockPerMonth = new JLabel("Stock Per Month:");
+                lblStockPerMonth.setBounds(10, 130, 80, 25);
+                panel.add(lblStockPerMonth);
 
+                JTextField txtStockPerMonth = new JTextField();
+                txtStockPerMonth.setBounds(100, 130, 160, 25);
+                panel.add(txtStockPerMonth);
                 JButton btnAdd = new JButton("Add");
                 btnAdd.setBounds(100, 100, 80, 25);
                 panel.add(btnAdd);
@@ -477,7 +510,8 @@ public class FinalProjectWindow extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         String name = txtName.getText();
                         double costPerUnit = Double.parseDouble(txtCostPerUnit.getText());
-                        matricielle.addMat(name, costPerUnit);
+                        int stock=Integer.parseInt(txtStockPerMonth.getText());
+                        matricielle.addMat(name, costPerUnit,stock);
                         addFrame.dispose();
                     }
                 });
@@ -555,20 +589,63 @@ public class FinalProjectWindow extends JFrame {
                 panel.add(txtName);
 
                 JLabel lblState = new JLabel("State:");
-                lblState.setBounds(10, 50, 80, 25);
+                lblState.setBounds(300, 10, 80, 25);
                 panel.add(lblState);
 
                 JTextField txtState = new JTextField();
-                txtState.setBounds(100, 50, 160, 25);
+                txtState.setBounds(390, 10, 160, 25);
                 panel.add(txtState);
 
-                JLabel lblDuration = new JLabel("Duration:(in days)");
-                lblDuration.setBounds(10, 90, 80, 25);
+                JLabel lblSTRdate = new JLabel("Start Date:");
+                lblSTRdate.setBounds(10, 50, 80, 25);
+                panel.add(lblSTRdate);
+
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                DateFormatter dateFormatter = new DateFormatter(dateFormat);
+
+                // Get the current date
+                Date currentDate = new Date();
+
+                JFormattedTextField txtSTRdate = new JFormattedTextField(dateFormatter);
+                txtSTRdate.setValue(currentDate); // Set the Date object directly
+                txtSTRdate.setBounds(100, 50, 160, 25);
+                panel.add(txtSTRdate);
+
+                JLabel lblENDdate = new JLabel("End Date:");
+                lblENDdate.setBounds(300, 50, 80, 25);
+                panel.add(lblENDdate);
+
+                JFormattedTextField txtENDdate = new JFormattedTextField(dateFormatter);
+                txtENDdate.setBounds(390, 50, 160, 25);
+                panel.add(txtENDdate);
+
+                JButton btnCalculate = new JButton("Calculate Duration");
+                btnCalculate.setBounds(10, 100, 250, 25);
+                panel.add(btnCalculate);
+
+                JLabel lblDuration = new JLabel("Duration: ");
+                lblDuration.setBounds(300, 100, 250, 25);
                 panel.add(lblDuration);
 
-                JTextField txtDuration = new JTextField();
-                txtDuration.setBounds(100, 90, 160, 25);
-                panel.add(txtDuration);
+                btnCalculate.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            Date startDate = dateFormat.parse(txtSTRdate.getText());
+                            Date endDate = dateFormat.parse(txtENDdate.getText());
+
+                            if (startDate != null && endDate != null && endDate.compareTo(startDate) > 0) {
+                                durationPr = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+                                lblDuration.setText("Duration: " + durationPr + " days");
+                            } else {
+                                lblDuration.setText("Please enter valid dates.");
+                            }
+                        } catch (ParseException ex) {
+                            lblDuration.setText("Please enter valid dates.");
+                        }
+                    }
+                });
+                
                 JLabel lblMtResources = new JLabel("Resources Matricielle:");
                 lblMtResources.setBounds(10, 140, 140, 40);
                 panel.add(lblMtResources);
@@ -586,7 +663,7 @@ public class FinalProjectWindow extends JFrame {
                 
                 for (String entry : resourceEntries) {
                     String[] data = entry.split(",");
-                    JCheckBox checkBox = new JCheckBox(data[1] + " (Cost per unit: " + data[2] + ")");
+                    JCheckBox checkBox = new JCheckBox(data[1] + " (unit:" + data[2] + "$)");
                     JTextField quantity = new JTextField();
                     quantity.setBounds(210, yPositionn, 60, 25);
                     panel.add(quantity);
@@ -594,23 +671,35 @@ public class FinalProjectWindow extends JFrame {
                     panel.add(checkBox);
                     resourceCheckBoxes.add(checkBox);
                     yPositionn += yOffsettt; // Update Y position for the next checkbox
-
+                    JLabel lblRateST = new JLabel("");
+                    lblRateST.setBounds(10, yPositionn+70, 250, 25);
+                    panel.add(lblRateST);
                     checkBox.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                         	String d=quantity.getText();
+                        	
                         	int Quantity=Integer.parseInt(d);
                         	double cost=Double.parseDouble(data[2]);
+                        	double stock=Double.parseDouble(data[3]);
+                        	 double rate=((durationPr)/30)*stock;
+                        	 int rateSt=(int)rate;
                             try {
+                            	 if (d.trim().isEmpty()) {
+                                     System.out.println("Quantity can't be empty");
+                                     checkBox.setSelected(false);
+                                     return;
+                                 }
                                 if (checkBox.isSelected() && d!=" ") {
-                                	matricielle = new Resource.Matrielle(data[1], cost,Quantity);
-                                  inmtSet.add(matricielle); 
-                                 System.out.println("ADDED! " + inmtSet);
-                           
-                               
-                                 int size =inmtSet.size();
-                                 if(size == 2) {
-              
+                                	
+                                 if (Quantity > rate) {
+                                     System.out.println("Error: Working hours exceeded.");
+                                     checkBox.setSelected(false);
+                                     lblRateST.setText("Stock of "+data[1]+" is" + rateSt+" units");
+                                 } else {
+                                	 matricielle = new Resource.Matrielle(data[1], cost,Quantity);
+                                     inmtSet.add(matricielle); 
+                                    System.out.println("ADDED! " + inmtSet);
                                  }
                                 } else {
                                 	inmtSet.remove(matricielle);  
@@ -636,14 +725,19 @@ public class FinalProjectWindow extends JFrame {
 
                 int yPosition = 180; // Starting Y position for checkboxes
                 int yOffset = 40; // Vertical offset between checkboxes
-           
+
                 TreeSet<Resource.HumanRes> humSet = new TreeSet<>();
                 JTextField rt = new JTextField();
                 rt.setBounds(210, yPosition, 60, 25);
                 panel.add(rt);
+                int duration = (int) durationPr;
                 for (String entry : resourcehrEntries) {
                     String[] data = entry.split(",");
-                    JCheckBox checkBox = new JCheckBox(data[1] + " (Rate: " + data[2] + ")");
+                    if (data.length < 5) {
+                        System.out.println("Invalid data format: " + entry);
+                        continue;
+                    }
+                    JCheckBox checkBox = new JCheckBox(data[1]);
                     JTextField quantity = new JTextField();
                     quantity.setBounds(480, yPosition, 60, 25);
                     panel.add(quantity);
@@ -651,42 +745,70 @@ public class FinalProjectWindow extends JFrame {
                     panel.add(checkBox);
                     resourcehrCheckBoxes.add(checkBox);
                     yPosition += yOffset; // Update Y position for the next checkbox
-
+                    JLabel lblRate = new JLabel("");
+                    lblRate.setBounds(480, yPosition+30, 250, 25);
+                    panel.add(lblRate);
                     checkBox.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                        	String d=quantity.getText();
-                        	double cost=Double.parseDouble(data[2]);
-                        	int q=Integer.parseInt(d);
+                            String quantityText = quantity.getText();
                             try {
-                                if (checkBox.isSelected() && d!=" ") {
-                                    human=new Resource.HumanRes(data[1],cost,data[3],data[4],q);
-                                    humSet.add(human);
-                                 System.out.println("ADDED! " + humSet);
-                                 int size =humSet.size();
-                                 if(size == 2) {
-                              
-                                 }
+                                if (quantityText.trim().isEmpty()) {
+                                    System.out.println("Hours cannot be empty.");
+                                    checkBox.setSelected(false);
+                                    return;
+                                }
+                                double cost = Double.parseDouble(data[2]);
+                                int q = Integer.parseInt(quantityText);
+                                double wh = Double.parseDouble(data[5]);
+                               //nt identifier = Integer.parseInt(data[0]);
+                                double rate=((durationPr*(wh/24))/30)*24;
+                             // System.out.println("Identifier: " + identifier);
+                                int ratew=(int)rate;
+                                System.out.println(rate);
+                                if (checkBox.isSelected()) {
+                                    if (q > rate) {
+                                        System.out.println("Error: Working hours exceeded.");
+                                        checkBox.setSelected(false);
+                                        lblRate.setText("Rate of"+data[1]+" is" + ratew+"hrs");
+                                    } else {
+                                        Resource.HumanRes newHuman = new Resource.HumanRes(data[1], cost, data[3], data[4], q, wh - q);
+                                        humSet.add(newHuman);
+                                        System.out.println("ADDED! " + newHuman);
+                                    }
                                 } else {
-                                	humSet.remove(human);  
-                                	
-                                    System.out.println("REMOVED!");
+                                    Resource.HumanRes existingHuman = findHumanByName(humSet, data[1]);
+                                    if (existingHuman != null) {
+                                        humSet.remove(existingHuman);
+                                        System.out.println("REMOVED!");
+                                    }
+                                }
+                            } catch (NumberFormatException ex) {
+                                System.out.println("Invalid quantity entered. Please enter a valid number.");
+                                checkBox.setSelected(false);
+                            } catch (ArrayIndexOutOfBoundsException ex) {
+                                System.out.println("Data array does not have the required elements.");
+                                checkBox.setSelected(false);
+                            } catch (Exception ex) {
+                                System.out.println("An unexpected error occurred: " + ex.getMessage());
+                                checkBox.setSelected(false);
+                            }
+                        }
+                        private Resource.HumanRes findHumanByName(Set<Resource.HumanRes> humSet, String name) {
+                            for (Resource.HumanRes human : humSet) {
+                                if (human.getName().equals(name)) {
+                                    return human;
                                 }
                             }
-                            
-                            catch (NumberFormatException ex) {
-                                System.out.print("Invalid quantity entered. Please enter a valid number.");
-                            }catch (ClassCastException cce) {}
-                            
+                            return null;
                         }
-                    });resourceMap.put("ResourceHuman", humSet);
+                    });
+                    resourceMap.put("ResourceHuman", humSet);
                 }
-
                 //////////////////////////////////////
                JLabel lbllgResources = new JLabel("Resources Logistics:");
                lbllgResources.setBounds(600, 140, 140, 40);
                 panel.add(lbllgResources);
-
                 List<JCheckBox> resourcelgCheckBoxes = new ArrayList<>();
                 Set<String> resourcelgEntries = log.getLogistics();
                 int yPositionlg = 180; // Starting Y position for checkboxes
@@ -695,28 +817,29 @@ public class FinalProjectWindow extends JFrame {
                 for (String entry : resourcelgEntries) {
                     String[] data = entry.split(",");
                    if (data.length>1) {
-                    JCheckBox checkBox = new JCheckBox(data[1] + " (Cost per unit: " + data[2] + ")");
-                    checkBox.setBounds(600, yPositionlg, 300, 35);
-                    panel.add(checkBox);
-                    resourcelgCheckBoxes.add(checkBox);
-                    yPositionlg += yOffsetlg; // Update Y position for the next checkbox
-                  
-                    checkBox.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            if (checkBox.isSelected()) {
-                            	double d=Double.parseDouble(data[2]);
-                            	   log = new Resource.Logistics(data[1],d);
-                            	subsetlog.add(log);
-                                System.out.print("ADDED!");
-                            } else {
-                            	subsetlog.remove(log);
-                                System.out.print("REMOVED!");
-                            }
-                            System.out.print("last"+subsetlog);
-                        }
-                      
-                    });  resourceMap.put("ResourceLog", subsetlog);
+	                    JCheckBox checkBox = new JCheckBox(data[1] + " (" + data[2] + ")");
+	                    checkBox.setBounds(600, yPositionlg, 300, 35);
+	                    panel.add(checkBox);
+	                    resourcelgCheckBoxes.add(checkBox);
+	                    yPositionlg += yOffsetlg; // Update Y position for the next checkbox
+	                  
+		                    checkBox.addActionListener(new ActionListener() {
+		                        @Override
+		                        public void actionPerformed(ActionEvent e) {
+		                            if (checkBox.isSelected()) {
+		                            	double d=Double.parseDouble(data[2]);
+		                            	   log = new Resource.Logistics(data[1],d);
+		                            	subsetlog.add(log);
+		                                System.out.print("ADDED!");
+		                            } else {
+		                            	subsetlog.remove(log);
+		                                System.out.print("REMOVED!");
+		                            }
+		                            System.out.print("last"+subsetlog);
+		                        }
+		                      
+		                    }); 
+		                    resourceMap.put("ResourceLog", subsetlog);
                    }  }
 
              
@@ -728,7 +851,7 @@ public class FinalProjectWindow extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         String name = txtName.getText();
                         String state = txtState.getText();
-                        int duration = Integer.parseInt(txtDuration.getText());
+                        //int duration = Integer.parseInt(txtDuration.getText());
                         double logCost=0.0;
                         double MatCost=0.0;
                         
@@ -783,7 +906,7 @@ public class FinalProjectWindow extends JFrame {
                         }
 
                        
-                        System.out.print(logCost);
+                     
                         double cost=r.totalResourceCost(sumlog,sumMat,sumHum);
                         Process process = new Process(name,resourceMap,cost,state,duration);
                         process.addProcess(process);
@@ -901,6 +1024,7 @@ public class FinalProjectWindow extends JFrame {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             try {
+                            	
                                 if ((checkBox.isSelected()) != false) {
                                     Process newProcess = new Process(name, rscMap, cost, state, duration);
                                     processesAdded.add(newProcess);
@@ -931,7 +1055,11 @@ public class FinalProjectWindow extends JFrame {
                         try {
                             String nameTask = txtName.getText();
                             String stateTask = txtState.getText();
-                         
+                       
+                        	if (nameTask.isEmpty() || stateTask.isEmpty() || processesAdded.isEmpty()) {
+                                JOptionPane.showMessageDialog(addFrame, "All fields and at least one process must be selected.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
                             double sumTask = 0.0;
                             int durationTask = 0;
 
@@ -1144,7 +1272,10 @@ public class FinalProjectWindow extends JFrame {
                         try {
                             String nameTask = txtName.getText();
                             String stateTask = txtState.getText();
-                         
+                        	if (nameTask.isEmpty() || stateTask.isEmpty() || tasksAdded.isEmpty()) {
+                                JOptionPane.showMessageDialog(addFrame, "All fields  must be not empty.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
                             double sumTask = 0.0;
                             int Duration = 0;
                             for (Tasks pr : tasksAdded) {
